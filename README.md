@@ -1,5 +1,6 @@
 ### 📩 SMS Spam Detection App
 
+live link:
 This is a simple SMS Spam Detection web app built using Streamlit, Machine Learning, and Natural Language Processing (NLP). The app takes a text message as input and predicts whether it is Spam or Not Spam.
 
 ⸻
