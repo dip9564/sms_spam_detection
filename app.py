@@ -3,7 +3,11 @@ import pickle
 from nltk.corpus import stopwords
 import nltk
 import string
-nltk.download('stopwords')
+try:
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    nltk.download('stopwords')
+    
 ps = nltk.stem.porter.PorterStemmer()
 
 def text_transformed(text):
