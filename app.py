@@ -26,7 +26,7 @@ def text_transformed(text):
         if i.isalnum(): # remove special characters
             y.append(i)
     y2=[]
-    for i in text:
+    for i in y:
         if i not in stop_words and i not in string.punctuation: # remove stop words and punctuation
             y2.append(ps.stem(i)) # stemming
     
@@ -42,8 +42,11 @@ input_sms = st.text_area("Enter the SMS message:")
 if st.button("Predict"):
     # 1. preprocess 
     transformed_sms = text_transformed(input_sms)
+    if transformed_sms.strip() == "":
+        st.warning("Please enter valid text")
+        st.stop()
     # 2. vectorize
-    cv_sms = cv.fit_transform([transformed_sms])
+    cv_sms = cv.transform([transformed_sms])
     # 3. predict
     result = model.predict(cv_sms)[0]
 
@@ -53,4 +56,5 @@ if st.button("Predict"):
         st.success("Not Spam")
 
     prob = model.predict_proba(cv_sms)
-    st.write("Confidence:", prob)
+    st.write(f"Spam probability: {prob[0][0]:.2f}")
+    st.write(f"Not Spam probability: {prob[0][1]:.2f}")
