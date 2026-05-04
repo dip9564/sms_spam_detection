@@ -18,6 +18,21 @@ except LookupError:
 ps = nltk.stem.porter.PorterStemmer()
 stop_words = set(stopwords.words('english'))
 
+page_bg_img = """
+
+<style>
+[data-testid="stAppViewContainer"] {
+    background-image: url("https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimg.freepik.com%2Fphotos-gratuite%2Fabstrait-numerique-grille-fond-noir_53876-97647.jpg%3Fsemt%3Dais_hybrid%26w%3D740&f=1&nofb=1&ipt=3a551da015306bbddd270ba2ae800e19c0cd7a495531591dc2fac4df03aeca4c");
+    background-size: cover;
+}
+
+[data-testid="stHeader"] {
+background-color: rgba(0, 0, 0, 0);
+}
+</style>
+"""
+st.markdown(page_bg_img,unsafe_allow_html=True)
+
 with st.sidebar:
     st.header("📱 SMS Spam Detector")
 
@@ -56,7 +71,7 @@ model = pickle.load(open('model.pkl', 'rb'))
 st.title("SMS Spam Detection")
 input_sms = st.text_area("Enter the SMS message:")
 
-if st.button("Predict"):
+if st.button("Predict", type="primary"):
     # 1. preprocess 
     transformed_sms = text_transformed(input_sms)
     if transformed_sms.strip() == "":
