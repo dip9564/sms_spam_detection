@@ -93,4 +93,25 @@ if st.button("Predict", type="primary"):
         col2.info(f"Spam probability: {prob[0][0]:.2f} \n\n Not Spam probability: {prob[0][1]:.2f}")
 
 
+# testing data
+test_text1 = """Accident compensation 
+You have still not claimed the compensation you are due for the accident you had. 
+To start the process please reply YES. To opt out text STOP"""
+
+test_text2 = """A [redacted] Loan for £950 is approved for you if you receive this SMS. 
+1 min verification & cash in 1hr at www.[redacted].co.uk to opt out reply stop"""
+
+test_text3 = """I am free today, lets go out for a movie. What do you say?"""
+
+test_text4 = """You could be entitled up to £3,160 in compensation from mis-sold PPI 
+on a credit card or Loan. Please reply PPI for info or STOP to opt out."""
+
+test_text5 = """congratulations you won 1000 call on thist number to get your prize"""
+
+col1,col2=st.columns([1,1])
+with col1.expander("Test the model with sample messages"):
     
+    st.code(test_text1, language="text")
+    st.code(test_text2, language="text")
+    st.code(test_text3, language="text")
+    st.code(test_text4, language="text")
