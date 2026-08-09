@@ -1,117 +1,50 @@
-import streamlit as st
-import pickle
-from nltk.corpus import stopwords
-import string,nltk
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
-try:
-    nltk.data.find('tokenizers/punkt_tab')
-except LookupError:
-    nltk.download('punkt_tab')
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords')
+from fastapi import FastAPI,HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from Model.predict import predict_output, MODEL_VERSION, model
+from pydantic import BaseModel,Field
+from typing import Literal,Annotated
 
-ps = nltk.stem.porter.PorterStemmer()
-stop_words = set(stopwords.words('english'))
 
-page_bg_img = """
+class SMSRequest(BaseModel):
+    data: str
 
-<style>
-[data-testid="stAppViewContainer"] {
-    background-image: url("https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimg.freepik.com%2Fphotos-gratuite%2Fabstrait-numerique-grille-fond-noir_53876-97647.jpg%3Fsemt%3Dais_hybrid%26w%3D740&f=1&nofb=1&ipt=3a551da015306bbddd270ba2ae800e19c0cd7a495531591dc2fac4df03aeca4c");
-    background-size: cover;
-}
+class APiResponse(BaseModel):
+    result:Annotated[Literal[0,1], Field(..., description="The predicted insurance premium category")]
+    probabilities: Annotated[dict [str, float], Field(..., description="Probabilities of each category")]
 
-[data-testid="stHeader"] {
-background-color: rgba(0, 0, 0, 0);
-}
-</style>
-"""
-st.markdown(page_bg_img,unsafe_allow_html=True)
+app=FastAPI()
 
-with st.sidebar:
-    st.header("📱 SMS Spam Detector")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # For testing
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    with st.expander("About this app"):
-        st.write("""
-                This SMS Spam Detection app uses Machine Learning 
-                to classify messages as Spam or Not Spam.
-                 
-                👉 Model: Logistic Regression  
-                 
-                👉 Vectorizer: CountVectorizer """)
+@app.get("/")
+def home():
+    return {"message": "Welcome to the SMS Spam Prediction API. Use the /predict endpoint to get predictions."}
 
-    with st.expander("Limitations"):
-        st.write("* Predictions may not be 100% accurate  \n\n* Model is still under improvement  \n\n* Avoid relying on this for critical decisions ")
+@app.get("/health")
+def health_check():
+    return {
+        "status": "OK",
+        "version": MODEL_VERSION ,
+        "model_loaded": model is not None
+    }
 
-    with st.expander("Future work"):
-        st.write("- Better accuracy with TF-IDF  \n\n- Deep Learning models \n\n- Larger dataset training ")
+@app.post("/predict",response_model=APiResponse) 
+def predict_premium(request: SMSRequest):
+    text =request.data
 
-def text_transformed(text):
-    text=text.lower() # convert text to lowercase
-    text= nltk.word_tokenize(text) # tokenize the text
-    y=[]
-    for i in text:
-        if i.isalnum(): # remove special characters
-            y.append(i)
-    y2=[]
-    for i in y:
-        if i not in stop_words and i not in string.punctuation: # remove stop words and punctuation
-            y2.append(ps.stem(i)) # stemming
+    if model is None:
+        raise HTTPException(status_code=500, detail="Model could not be loaded")
+
+    try:
+        result = predict_output(text)
+        return result
+        
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {exc}") from exc
     
-    return " ".join(y2)
-
-cv = pickle.load(open('vectorizer.pkl', 'rb'))
-model = pickle.load(open('model.pkl', 'rb'))
-
-st.title("SMS Spam Detection")
-input_sms = st.text_area("Enter the SMS message:")
-
-if st.button("Predict", type="primary"):
-    # 1. preprocess 
-    transformed_sms = text_transformed(input_sms)
-    if transformed_sms.strip() == "":
-        st.error("Please enter valid text")
-        st.stop()
-    # 2. vectorize
-    cv_sms = cv.transform([transformed_sms])
-    # 3. predict
-    result = model.predict(cv_sms)[0]
-    prob = model.predict_proba(cv_sms)
-
-    col1,col2=st.columns([2,1])
-    if result == 0:
-        col1.error("Spam detected")
-        col2.warning(f"Spam probability: {prob[0][0]:.2f} \n\n Not Spam probability: {prob[0][1]:.2f}")
-
-    else:
-        col1.success("Not Spam")
-        col2.info(f"Spam probability: {prob[0][0]:.2f} \n\n Not Spam probability: {prob[0][1]:.2f}")
-
-
-# testing data
-test_text1 = """Accident compensation 
-You have still not claimed the compensation you are due for the accident you had. 
-To start the process please reply YES. To opt out text STOP"""
-
-test_text2 = """A [redacted] Loan for £950 is approved for you if you receive this SMS. 
-1 min verification & cash in 1hr at www.[redacted].co.uk to opt out reply stop"""
-
-test_text3 = """I am free today, lets go out for a movie. What do you say?"""
-
-test_text4 = """You could be entitled up to £3,160 in compensation from mis-sold PPI 
-on a credit card or Loan. Please reply PPI for info or STOP to opt out."""
-
-test_text5 = """congratulations you won 1000 call on thist number to get your prize"""
-
-col1,col2=st.columns([1,1])
-with col1.expander("Test the model with sample messages"):
-    
-    st.code(test_text1, language="text")
-    st.code(test_text2, language="text")
-    st.code(test_text3, language="text")
-    st.code(test_text4, language="text")
