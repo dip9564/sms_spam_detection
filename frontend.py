@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 
+
 page_bg_img = """
 <style>
 [data-testid="stAppViewContainer"] {
