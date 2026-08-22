@@ -14,7 +14,7 @@ background-color: rgba(0, 0, 0, 0);
 </style>
 """
 
-API_url="http://127.0.0.1:8000/predict"
+API_url="https://sms-spam-detection-1-2lm5.onrender.com/predict"
 
 st.markdown(page_bg_img,unsafe_allow_html=True)
 
